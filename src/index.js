@@ -10,9 +10,12 @@ const PORT = process.env.PORT;
 console.log(new Date());
 
 const app = express();
+app.use(express.json());
 app.use(authorize);
 app.use('/qa', qaRoutes);
 
 
 app.listen(PORT);
 console.log(`Listening at ${BASE_URL}:${PORT}`);
+
+module.exports = app;
