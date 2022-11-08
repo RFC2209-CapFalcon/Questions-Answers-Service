@@ -1,11 +1,10 @@
-const db = require('../db/index.js');
-
+const service = require('./services.js');
 /**
  * Retrieves a list of questions for a particular product. This list does not include any reported questions.
- * @param {product_id, page, count} req
- * @param {*} res
+ * @param {{product_id, page, count}} req
+ * @param {Object} res
  */
-exports.getQuestions = (req, res) => {
+exports.getQuestions = async (req, res) => {
   const product_id = Number(req.query.product_id);
   const page = Number(req.query.page) || 1;
   const count = Number(req.query.count) || 5;
@@ -15,14 +14,23 @@ exports.getQuestions = (req, res) => {
     res.status(422).send('Must supply a valid product_id');
   } else {
 
-    res.send('Questions for product ' + product_id);
+    /**
+     *
+     */
+    service.queryGetQuestions(product_id, page, count)
+      .then((data) => {
+        res.send(data);
+      })
+      .catch((err) => {
+        res.status(500).end();
+      });
   }
 }
 
 /**
  * Returns answers for a given question. This list does not include any reported answers.
- * @param {question_id, page, count} req
- * @param {*} res
+ * @param {{question_id, page, count}} req
+ * @param {Object} res
  */
 exports.getAnswers = (req, res) => {
   const question_id = Number(req.params.question_id);
@@ -39,7 +47,16 @@ exports.getAnswers = (req, res) => {
       res.status(422).send('Error: Cannot process request.  Check formatting of fields in query');
     } else {
 
-      res.send('Answers for question ' + question_id);
+      /**
+       *
+       */
+      service.queryGetAnswers(question_id, page, count)
+      .then((data) => {
+        res.send(data);
+      })
+      .catch((err) => {
+        res.status(500).end();
+      });
     }
   }
 }
@@ -47,8 +64,8 @@ exports.getAnswers = (req, res) => {
 /**
  * Adds a question for the given product
  *
- * @param {product_id, body, name, email} req
- * @param {*} res
+ * @param {{product_id, body, name, email}} req
+ * @param {Object} res
  */
 exports.postQuestion = (req, res) => {
   const product_id = Number(req.body.product_id);
@@ -70,8 +87,17 @@ exports.postQuestion = (req, res) => {
     if (isNaN(product_id)  || !bodyIsValid || !nameIsValid || !emailIsValid) {
       res.status(422).send('Error: Cannot process request.  Something wrong with input');
     } else {
-      res.status(201).send('POST question here!');
 
+      /**
+       *
+       */
+      service.queryPostQuestion(product_id, body, name, email)
+        .then((data) => {
+          res.status(201).send(data);
+        })
+        .catch((err) => {
+          res.status(500).end();
+        });
     }
 
   }
@@ -80,8 +106,8 @@ exports.postQuestion = (req, res) => {
 /**
  * Adds an answer for the given question
  *
- * @param {question_id, body, name, email, photos} req
- * @param {*} res
+ * @param {{question_id, body, name, email, photos}} req
+ * @param {Object} res
  */
 exports.postAnswer = (req, res) => {
   const question_id = Number(req.body.question_id);
@@ -113,8 +139,16 @@ exports.postAnswer = (req, res) => {
       res.status(422).send('Error: Cannot process request.  Something wrong with input');
     } else {
 
-      res.status(201).send('POST answer here!');
-
+      /**
+       *
+       */
+      service.queryPostAnswer(question_id, body, name, email, photos)
+        .then((data) => {
+          res.status(201).send(data);
+        })
+        .catch((err) => {
+          res.status(500).end();
+        });
     }
   }
 }
@@ -122,8 +156,8 @@ exports.postAnswer = (req, res) => {
 /**
  * Updates a question to show it was found helpful.
  *
- * @param {question_id} req
- * @param {*} res
+ * @param {{question_id}} req
+ * @param {Object} res
  */
 exports.helpfulQuestion = (req, res) => {
   const question_id = Number(req.params.question_id);
@@ -139,8 +173,8 @@ exports.helpfulQuestion = (req, res) => {
 /**
  * Updates a question to show it was reported.
  *
- * @param {question_id} req
- * @param {*} res
+ * @param {{question_id}} req
+ * @param {Object} res
  */
 exports.reportQuestion = (req, res) => {
   const question_id = Number(req.params.question_id);
@@ -156,8 +190,8 @@ exports.reportQuestion = (req, res) => {
 /**
  * Updates an answer to show it was found helpful.
  *
- * @param {answer_id} req
- * @param {*} res
+ * @param {{answer_id}} req
+ * @param {Object} res
  */
 exports.helpfulAnswer = (req, res) => {
   const answer_id = Number(req.params.answer_id);
@@ -173,8 +207,8 @@ exports.helpfulAnswer = (req, res) => {
 /**
  * Updates an answer to show it has been reported.
  *
- * @param {answer_id} req
- * @param {*} res
+ * @param {{answer_id}} req
+ * @param {Object} res
  */
 exports.reportAnswer = (req, res) => {
   const answer_id = Number(req.params.answer_id);
