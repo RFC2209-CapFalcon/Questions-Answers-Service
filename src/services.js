@@ -44,7 +44,7 @@ module.exports = {
       FROM
         answers
       WHERE
-        question_id = questions.id
+        question_id = questions.id AND reported = false
       )`;
 
     // Array of questions
@@ -64,12 +64,13 @@ module.exports = {
       FROM
         questions
       WHERE
-        product_id = ${product_id})`;
+        product_id = ${product_id} AND reported = false
+      )`;
 
     // Selection of our SELECT query is formatted into JSON
     const SELECTION =
       `JSON_BUILD_OBJECT(
-        'product_id', ${product_id},
+        'product_id', CAST (${product_id} AS varchar),
         'results', ${RESULTS}
       )`;
 
@@ -122,13 +123,13 @@ module.exports = {
         FROM
           answers
         WHERE
-          question_id = ${question_id}
+          question_id = ${question_id} AND reported = false
         )`;
 
     // Selection of our SELECT query is formatted into JSON
     const SELECTION = `
       JSON_BUILD_OBJECT(
-        'question', ${question_id},
+        'question', CAST (${question_id} AS varchar),
         'page', ${page},
         'count', ${count},
         'results', ${RESULTS}
@@ -142,13 +143,13 @@ module.exports = {
   },
 
   /**
-   * POSTS passed args to database
+   * POSTS question to database
    *
    * @param {number} product_id - id of product to post question to
    * @param {string} body - body of question
    * @param {string} asker_name - name of question's asker
    * @param {string} asker_email - email of question's asker
-   * @returns - The result of our queries
+   * @returns - Whether we succesfully POSTED to our database
    */
   async queryPostQuestion (product_id, body, asker_name, asker_email) {
     let date = new Date().getTime();
@@ -171,22 +172,29 @@ module.exports = {
       '${asker_email}'
     )`;
 
+
     /**
-     * Send query result to client
+     * Send query result (success/fail) to client
      */
     return db.query(`INSERT INTO questions ${FIELDS} VALUES ${VALUES}`)
-      .then((res) => {res => {return res.rows[0]}})
-      .catch((err) => {console.log(err)});
+      .then(() => {
+        return true;
+      })
+      .catch((error) => {
+        console.log(error);
+        return false;
+      });
+
   },
 
   /**
-   * POSTS passed args to database
+   * POSTS answer to database
    * @param {number} question_id - id of question to post answer to
    * @param {string} body - body of answer
    * @param {string} answerer_name - name of answerer's asker
    * @param {string} answerer_email - email of answerer's asker
    * @param {Array} photos - array of photos
-   * @returns - The result of our queries
+   * @returns - Whether we succesfully POSTED to our database
    */
   async queryPostAnswer (question_id, body, answerer_name, answerer_email, photos) {
     let date = new Date().getTime();
@@ -206,51 +214,89 @@ module.exports = {
       '${body}',
       '${date}',
       '${answerer_name}',
-      '${answerer_email}',
+      '${answerer_email}'
     )`;
 
     /**
-     * Send query result to client (we need to concatenate multiple query results, though)
+     * Send query result (success/fail) to client
      */
-    return db.query(`INSERT INTO answers ${FIELDS} VALUES ${VALUES}`)
+    return db.query(`INSERT INTO answers ${FIELDS} VALUES ${VALUES} RETURNING id`)
       .then((res) => {
-        const answer_id = res.rows[0].id;
-        // Add a photos array to the result
-        res.rows[0].photos = [];
+        if (photos.length === 0) {
+          return true;
 
-        // Initialize an array of promises to Promisify
-        let promises = [];
+        } else {
+          const answer_id = res.rows[0].id;
 
-        // Make queries to photos table to add photos and add those queries to promises array
-        for (let i = 0; i < photos.length; i++) {
-          let promise = db.query(`INSERT INTO photos (answer_id, url) VALUES (${answer_id}, '${photos[i]}')`)
-            .then((res) => {
-              res.rows[0].photos.push(res.rows[0]);
+          // Initialize an array of promises to Promisify
+          let promises = [];
+
+          // Make queries to photos table to add photos and add those queries to promises array
+          for (let i = 0; i < photos.length; i++) {
+            let promise = db.query(`INSERT INTO photos (answer_id, url) VALUES (${answer_id}, '${photos[i]}')`)
+              .then((res) => {
+                res.rows[0].photos.push(res.rows[0]);
+              })
+              .catch((error) => {
+                console.log(error);
+              })
+            promises.push(promise);
+          }
+
+          // Once promises resolve, return result of queries
+          return Promise.all(promises)
+            .then(() => {
+              return true;
             })
-          promises.push(promise);
+            .catch((error) => {
+              console.log(error);
+              return false;
+            });
         }
-
-        // Once promises resolve, return result of queries
-        return Promise.all(promises)
-          .then(() => {
-            return res.rows[0];
-          });
+      })
+      .catch((error) => {
+        console.log('error');
+        return false;
       });
   },
 
   async queryHelpfulQuestion (question_id) {
-    db.query();
+    return db.query(`UPDATE questions SET helpful = helpful + 1 WHERE id = ${question_id}`)
+      .then(() => {
+        return true;
+      })
+      .catch(() => {
+        return false;
+      });
   },
 
   async queryReportQuestion (question_id) {
-    db.query();
+    return db.query(`UPDATE questions SET reported = true WHERE id = ${question_id}`)
+      .then(() => {
+        return true;
+      })
+      .catch(() => {
+        return false;
+      });
   },
 
-  async queryHelpfulAnswer (question_id) {
-    db.query();
+  async queryHelpfulAnswer (answer_id) {
+    return db.query(`UPDATE answers SET helpful = helpful + 1 WHERE id = ${answer_id}`)
+      .then(() => {
+        return true;
+      })
+      .catch(() => {
+        return false;
+      });
   },
 
-  async queryReportAnswer (question_id) {
-    db.query();
+  async queryReportAnswer (answer_id) {
+    return db.query(`UPDATE answers SET reported = true WHERE id = ${answer_id}`)
+      .then(() => {
+        return true;
+      })
+      .catch(() => {
+        return false;
+      });
   },
 };
