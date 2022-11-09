@@ -21,7 +21,8 @@ exports.getQuestions = async (req, res) => {
       .then((data) => {
         res.send(data);
       })
-      .catch((err) => {
+      .catch((error) => {
+        console.log(error);
         res.status(500).end();
       });
   }
@@ -89,14 +90,21 @@ exports.postQuestion = (req, res) => {
     } else {
 
       /**
-       *
+       * Call service to POST question, then send appropriate response based in service' success
        */
       service.queryPostQuestion(product_id, body, name, email)
-        .then((data) => {
-          res.status(201).send(data);
+        .then((created) => {
+
+          if (created) {
+            res.status(201).send('Created');
+
+          } else {
+            res.status(500).end();
+
+          }
         })
         .catch((err) => {
-          res.status(500).end();
+          console.log(err)
         });
     }
 
@@ -110,7 +118,7 @@ exports.postQuestion = (req, res) => {
  * @param {Object} res
  */
 exports.postAnswer = (req, res) => {
-  const question_id = Number(req.body.question_id);
+  const question_id = Number(req.params.question_id);
   const body = req.body.body;
   const name = req.body.name;
   const email = req.body.email;
@@ -120,7 +128,7 @@ exports.postAnswer = (req, res) => {
   const bodyIsValid = body && typeof body === 'string' && body.length > 0 && body.length <= 1000;
   const nameIsValid = name && typeof name === 'string' && name.length > 0 && name.length <= 60;
   const emailIsValid = email && typeof email === 'string' && email.length > 0 && email.length <= 60;
-  const photosIsValid = photos.isArray() && photos.length <= 5;
+  const photosIsValid = Array.isArray(photos) && photos.length <= 5;
 
   // Check that photos contains only strings
   for (let i = 0; i < photos.length; i++) {
@@ -129,25 +137,33 @@ exports.postAnswer = (req, res) => {
     }
   }
 
-  // Require product_id, body, name, email
-  if(!req.body.product_id || !body || !name || !email) {
-    res.status(422).send('Error: Missing a product_id, body, name, or email.');
+  // Require question_id, body, name, email
+  if(!req.params.question_id || !body || !name || !email) {
+    res.status(422).send('Error: Missing a question_id, body, name, or email.');
   } else {
 
     // Check we can process entities
-    if (isNaN(product_id)  || !bodyIsValid || !nameIsValid || !emailIsValid || !photosIsValid) {
+    if (isNaN(question_id)  || !bodyIsValid || !nameIsValid || !emailIsValid || !photosIsValid) {
       res.status(422).send('Error: Cannot process request.  Something wrong with input');
     } else {
 
       /**
-       *
+       * Call service to POST answer, then send appropriate response based in service' success
        */
       service.queryPostAnswer(question_id, body, name, email, photos)
-        .then((data) => {
-          res.status(201).send(data);
+        .then((created) => {
+          if (created) {
+            res.status(201).send('Created');
+
+          } else {
+            res.status(500).end();
+
+          }
         })
         .catch((err) => {
+          console.log(err)
           res.status(500).end();
+
         });
     }
   }
@@ -166,7 +182,20 @@ exports.helpfulQuestion = (req, res) => {
   if (!req.params.question_id || isNaN(question_id)) {
     res.status(404).send('Error: Must supply a valid question_id');
   } else {
-    res.status(204).send('PUT question helpful here!');
+    service.queryHelpfulQuestion(question_id)
+      .then((put) => { // Whether we successfully PUT or not
+        if (put) {
+          res.status(204).end();
+
+        } else {
+          res.status(500).end();
+        }
+
+      })
+      .catch((error) => {
+        console.log(error);
+        res.status(500).end();
+      });
   }
 }
 
@@ -183,7 +212,20 @@ exports.reportQuestion = (req, res) => {
   if (!req.params.question_id || isNaN(question_id)) {
     res.status(404).send('Error: Must supply a valid question_id');
   } else {
-    res.status(204).send('PUT question report here!');
+    service.queryReportQuestion(question_id)
+      .then((put) => { // Whether we successfully PUT or not
+        if (put) {
+          res.status(204).end();
+
+        } else {
+          res.status(500).end();
+        }
+
+      })
+      .catch((error) => {
+        console.log(error);
+        res.status(500).end();
+      });
   }
 }
 
@@ -200,7 +242,20 @@ exports.helpfulAnswer = (req, res) => {
   if (!req.params.answer_id || isNaN(answer_id)) {
     res.status(404).send('Error: Must supply a valid answer_id');
   } else {
-    res.status(204).send('PUT answer helpful here!');
+    service.queryHelpfulAnswer(answer_id)
+      .then((put) => { // Whether we successfully PUT or not
+        if (put) {
+          res.status(204).end();
+
+        } else {
+          res.status(500).end();
+        }
+
+      })
+      .catch((error) => {
+        console.log(error);
+        res.status(500).end();
+      });
   }
 }
 
@@ -217,6 +272,19 @@ exports.reportAnswer = (req, res) => {
   if (!req.params.answer_id || isNaN(answer_id)) {
     res.status(404).send('Error: Must supply a valid answer_id');
   } else {
-    res.status(204).send('PUT answer report here!');
+    service.queryReportAnswer(answer_id)
+      .then((put) => { // Whether we successfully PUT or not
+        if (put) {
+          res.status(204).end();
+
+        } else {
+          res.status(500).end();
+        }
+
+      })
+      .catch((error) => {
+        console.log(error);
+        res.status(500).end();
+      });
   }
 }
