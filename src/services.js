@@ -260,6 +260,11 @@ module.exports = {
       });
   },
 
+  /**
+   *
+   * @param {number} question_id - id of question to mark as helpful
+   * @returns - whether our query was successful or not
+   */
   async queryHelpfulQuestion (question_id) {
     return db.query(`UPDATE questions SET helpful = helpful + 1 WHERE id = ${question_id}`)
       .then(() => {
@@ -270,6 +275,11 @@ module.exports = {
       });
   },
 
+  /**
+   *
+   * @param {number} question_id - id of question to report
+   * @returns - whether our query was successful or not
+   */
   async queryReportQuestion (question_id) {
     return db.query(`UPDATE questions SET reported = true WHERE id = ${question_id}`)
       .then(() => {
@@ -280,6 +290,11 @@ module.exports = {
       });
   },
 
+  /**
+   *
+   * @param {number} answer_id - id of answer to mark as helpful
+   * @returns - whether our query was successful or not
+   */
   async queryHelpfulAnswer (answer_id) {
     return db.query(`UPDATE answers SET helpful = helpful + 1 WHERE id = ${answer_id}`)
       .then(() => {
@@ -290,6 +305,11 @@ module.exports = {
       });
   },
 
+  /**
+   *
+   * @param {number} answer_id - id of answer to mark as helpful
+   * @returns - whether our query was successful or not
+   */
   async queryReportAnswer (answer_id) {
     return db.query(`UPDATE answers SET reported = true WHERE id = ${answer_id}`)
       .then(() => {
