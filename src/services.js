@@ -165,17 +165,18 @@ module.exports = {
     // Values to add to database
     const VALUES = `(
       ${product_id},
-      ${body},
-      ${date},
-      ${asker_name},
-      ${asker_email}
+      '${body}',
+      '${date}',
+      '${asker_name}',
+      '${asker_email}'
     )`;
 
     /**
      * Send query result to client
      */
     return db.query(`INSERT INTO questions ${FIELDS} VALUES ${VALUES}`)
-      .then((res) => {res => {return res.rows[0]}});
+      .then((res) => {res => {return res.rows[0]}})
+      .catch((err) => {console.log(err)});
   },
 
   /**
@@ -202,10 +203,10 @@ module.exports = {
     // Values to add to database
     const VALUES = `(
       ${question_id},
-      ${body},
-      ${date},
-      ${answerer_name},
-      ${answerer_email},
+      '${body}',
+      '${date}',
+      '${answerer_name}',
+      '${answerer_email}',
     )`;
 
     /**
@@ -222,7 +223,7 @@ module.exports = {
 
         // Make queries to photos table to add photos and add those queries to promises array
         for (let i = 0; i < photos.length; i++) {
-          let promise = db.query(`INSERT INTO photos (answer_id, url) VALUES (${answer_id}, ${photos[i]})`)
+          let promise = db.query(`INSERT INTO photos (answer_id, url) VALUES (${answer_id}, '${photos[i]}')`)
             .then((res) => {
               res.rows[0].photos.push(res.rows[0]);
             })
