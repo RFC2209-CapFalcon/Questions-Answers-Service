@@ -20,11 +20,9 @@ module.exports = {
             'url', url
           )
         ),'[]'::json)
-      FROM
-        photos
-      WHERE
-        answer_id = answers.id
-      )`;
+      FROM photos
+      WHERE answer_id = answers.id
+    )`;
 
     // Object aggregate of answers
     const ANSWERS = `(
@@ -41,11 +39,10 @@ module.exports = {
               'photos', ${PHOTOS}
             )
         ))
-      FROM
-        answers
-      WHERE
-        question_id = questions.id AND reported = false
-      )`;
+      FROM answers
+      WHERE question_id = question.id
+      AND reported = false
+    )`;
 
     // Array of questions
     const RESULTS = `(
@@ -61,15 +58,15 @@ module.exports = {
             'answers', ${ANSWERS}
           )
         ),'[]'::json)
-      FROM
-        questions
-      WHERE
-        product_id = ${product_id} AND reported = false
-      LIMIT
-        ${count}
-      OFFSET
-        ${(page * count) - count}
-      )`;
+      FROM (
+        SELECT id, body, date_written, asker_name, helpful, reported, product_id
+        FROM questions
+        WHERE product_id = ${product_id}
+        AND reported = false
+        LIMIT ${count}
+        OFFSET ${(page * count) - count})
+        AS question
+    )`;
 
     // Selection of our SELECT query is formatted into JSON
     const SELECTION =
@@ -104,11 +101,9 @@ module.exports = {
             'url', url
           )
         ),'[]'::json)
-      FROM
-        photos
-      WHERE
-        answer_id = answers.id
-      )`;
+      FROM photos
+      WHERE answer_id = answer.id
+    )`;
 
       // Array of answers
       const RESULTS = `(
@@ -124,15 +119,15 @@ module.exports = {
                 'photos', ${PHOTOS}
               )
           )
-        FROM
-          answers
-        WHERE
-          question_id = ${question_id} AND reported = false
-        LIMIT
-          ${count}
-        OFFSET
-          ${(page * count) - count}
-        )`;
+        FROM (
+          SELECT id, body, date_written, answerer_name, reported, helpful, question_id
+          FROM answers
+          WHERE question_id = ${question_id}
+          AND reported = false
+          LIMIT ${count}
+          OFFSET ${(page * count) - count})
+          AS answer
+      )`;
 
     // Selection of our SELECT query is formatted into JSON
     const SELECTION = `
