@@ -55,7 +55,8 @@ exports.getAnswers = (req, res) => {
       .then((data) => {
         res.send(data);
       })
-      .catch((err) => {
+      .catch((error) => {
+        console.log(error)
         res.status(500).end();
       });
     }

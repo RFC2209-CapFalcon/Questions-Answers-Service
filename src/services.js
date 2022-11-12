@@ -48,8 +48,8 @@ module.exports = {
       )`;
 
     // Array of questions
-    const RESULTS = `
-      (SELECT
+    const RESULTS = `(
+      SELECT COALESCE (
         json_agg(
           json_build_object(
             'question_id', id,
@@ -60,11 +60,15 @@ module.exports = {
             'reported', reported,
             'answers', ${ANSWERS}
           )
-        )
+        ),'[]'::json)
       FROM
         questions
       WHERE
         product_id = ${product_id} AND reported = false
+      LIMIT
+        ${count}
+      OFFSET
+        ${(page * count) - count}
       )`;
 
     // Selection of our SELECT query is formatted into JSON
@@ -124,6 +128,10 @@ module.exports = {
           answers
         WHERE
           question_id = ${question_id} AND reported = false
+        LIMIT
+          ${count}
+        OFFSET
+          ${(page * count) - count}
         )`;
 
     // Selection of our SELECT query is formatted into JSON
